@@ -29,32 +29,34 @@ function! s:current_rule_from_filetype()
   return result
 endfunction
 
-function! s:move(direction) "{{{
+function! s:move(direction)
   let path = expand('%:p')
   let rules = s:current_rules()
   let target = ''
 
-ruby <<EOS
-  direction = VIM.evaluate('a:direction')
-  path = VIM.evaluate('path')
-  rule_list = VIM.evaluate('rules')
+  for rule in rules
+    for index in range(0, len(rule) - 1)
+      let pattern = substitute(rule[index], '%', '\\(.*\\)', 'g')
 
-  rule_list.each do |rules|
-    rules.each_with_index do |rule, index|
-      regexp = Regexp.new(rule.sub('%', '(.*)'))
+      if match(path, pattern) >= 0
+        let raw_replacement = rule[(index + a:direction) % len(rule)]
+        let replacement = s:build_replacement(raw_replacement)
+        let new_path = substitute(path, pattern, replacement, 'g')
 
-      if path =~ regexp
-        matched = Regexp.last_match[1]
-        base = path.gsub(regexp, '')
-        replaced = rules[(index + direction) % rules.length].gsub(/\\./, '.').sub('%', matched)
-        VIM.command("let target = '#{base + replaced}'")
+        if filereadable(new_path)
+          edit `=new_path`
+          return
+        endif
       end
-    end
-  end
-EOS
+    endfor
+  endfor
+endfunction
 
-  echo target
-  if !empty(target) && filereadable(target)
-    edit `=target`
-  endif
-endfunction "}}}
+function! s:build_replacement(replacement)
+  let replacement = a:replacement
+  let count = 1
+  let replacement = substitute(replacement, '%', '\\' . count, '')
+
+  return replacement
+endfunction
+

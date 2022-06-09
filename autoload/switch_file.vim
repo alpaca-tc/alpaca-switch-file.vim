@@ -39,12 +39,15 @@ function! s:move(direction)
       let pattern = substitute(rule[index], '%', '\\(.*\\)', '')
 
       if match(path, pattern) >= 0
-        let raw_replacement = rule[(index + a:direction) % len(rule)]
-        let replacement = s:build_replacement(raw_replacement)
-        let candidates = [
-              \ substitute(path, pattern, replacement, ''),
-              \ substitute(fnamemodify(path, ':t'), pattern, replacement, '')
-              \ ]
+        let candidates = []
+
+        for length in range(1, len(rule))
+          let raw_replacement = rule[(index + (length * a:direction) + len(rule)) % len(rule)]
+          let replacement = s:build_replacement(raw_replacement)
+          call add(candidates, substitute(path, pattern, replacement, ''))
+          " call add(candidates, substitute(fnamemodify(path, ':t'), pattern, replacement, ''))
+        endfor
+
         for candidate in candidates
           if filereadable(candidate)
             edit `=candidate`

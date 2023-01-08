@@ -44,7 +44,11 @@ function! s:move(direction)
         for length in range(1, len(rule))
           let raw_replacement = rule[(index + (length * a:direction) + len(rule)) % len(rule)]
           let replacement = s:build_replacement(raw_replacement)
-          call add(candidates, substitute(path, pattern, replacement, ''))
+          let candidate = substitute(path, pattern, replacement, '')
+
+          if path != candidate
+            call add(candidates, candidate)
+          endif
           " call add(candidates, substitute(fnamemodify(path, ':t'), pattern, replacement, ''))
         endfor
 

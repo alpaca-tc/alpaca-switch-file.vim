@@ -16,13 +16,18 @@ function! s:current_rules() "{{{
   endif
 endfunction "}}}
 
+let s:default_context = {
+      \ "basename": function('fnamemodify', [expand('%:p'), ':t']),
+      \ "basename_no_ext": function('fnamemodify', [expand('%:p'), ':t:r:r:r:r']),
+      \ }
+
 function! s:current_context()
   if exists('b:switch_file_context')
-    return b:switch_file_context
+    return extend(copy(b:switch_file_context), s:default_context)
   elseif exists('g:switch_file_context')
-    return g:switch_file_context
+    return extend(copy(g:switch_file_context), s:default_context)
   else
-    return {}
+    return s:default_context
   endif
 endfunction
 
